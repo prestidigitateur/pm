@@ -1,0 +1,206 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+
+    <title>PasswordManager</title>
+
+    <meta name="description" content="Safely store your passwords and have access to them everywhere">
+    <meta name="author" content="Dmitriy Grid">
+
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/style.css" rel="stylesheet">
+
+</head>
+<body>
+    <nav class="navbar navbar-default navbar-fixed-top" role="navigation">
+        <div class="container">
+            <div class="navbar-header">
+                <button type="button" class="navbar-toggle" data-toggle="collapse" data-target=".navbar-collapse">
+                    <span class="sr-only">Toggle navigation</span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                    <span class="icon-bar"></span>
+                </button> <a class="navbar-brand" href="#">PM<small>beta</small></a>
+            </div>
+
+            <div class="navbar-collapse collapse">
+
+                <ul class="nav navbar-nav">
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#fileModelDialog"><span class="glyphicon glyphicon-file"></span> File</a>
+                    </li>
+                </ul>
+
+                <form class="navbar-form navbar-left" onsubmit="btnSearchEntry(); return false;">
+                    <div class="form-group input-group">
+                        <input type="text" class="form-control" placeholder="Search by name" id="searchName"/>
+                        <span class="input-group-btn">
+                            <button type="submit" class="btn btn-primary">
+                                <span class="glyphicon glyphicon-search"></span>
+                            </button>
+                        </span>
+                    </div>
+                </form>
+
+                <ul class="nav navbar-nav navbar-right">
+                    <li>
+                        <a href="#" data-toggle="modal" data-target="#entryModelDialog"><span class="glyphicon glyphicon-plus"></span> Add</a>
+                    </li>
+                    <li>
+                        <a href="#" data-toggle="modal" onclick="btnGetPassword()"><span class="glyphicon glyphicon-lock"></span> Protect</a>
+                    </li>
+                </ul>
+
+            </div>
+        </div>
+    </nav>
+    <main>
+        <div class="container body-content">
+            <div class="row" id="mainDiv">
+                <div class="col-md-12 hide" id="entryDiv" style="padding-top: 4px; padding-bottom: 4px;">
+                    <fieldset id="fieldset" class="col-md-10 col-md-offset-1">
+                        <legend id="name">Redmine</legend>
+                        <div class="form-inline">
+                            <div class="form-group pull-right" style="padding-left: 4px; padding-right: 2px;">
+                                <button type="button" class="btn btn-primary" onclick="expandEntry('i')"><span class="glyphicon glyphicon-cog"></span></button>
+                            </div>
+                            <div class="col-sm-5 col-md-5 input-group form-group">
+                                <input type="text" class="form-control" placeholder="Login" id="login" readonly/>
+                                <span class="input-group-btn" style="max-width: 43px;">
+                                    <button type="button" class="btn btn-primary" onclick = "btnCopyToClipboard(loginI)"><span class="glyphicon glyphicon-duplicate"></span></button>
+                                </span>
+                            </div>
+                            <div class="col-sm-6 col-md-6 input-group form-group">
+                                <input type="password" class="form-control" placeholder="Password" id="password" readonly/>
+                                <span class="input-group-btn">
+                                    <button type="button" class="btn btn-primary" onclick = "btnCopyToClipboard(passwordI)"><span class="glyphicon glyphicon-duplicate"></span></button>
+                                    <button type="button" class="btn btn-primary" style="width: 48px;" id="btnCopyPass" onclick="btnShowHidePassword('i')"><span class="glyphicon glyphicon-eye-close"></span></button>
+                                </span>
+
+                            </div>
+                        </div>
+                    </fieldset>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- jQuery v2.1.4 -->
+    <script src="js/jquery.min.js"></script>
+    <!-- Bootstrap v3.3.5 -->
+    <script src="js/bootstrap.min.js"></script>    
+    <!-- CryptoJS v3.1.2 -->
+    <script src="js/aes.js"></script> 
+    <script src="js/scripts.js"></script>
+
+    <div id="fileModelDialog" tabindex="0" class="modal fade">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-body no-padding">
+                    <div class="tabbable" id="tabsFile">
+                        <ul class="nav nav-tabs">
+                            <li class="active" style="padding-left: 15px;">
+                                <a href="#panelLocal" data-toggle="tab">Local</a>
+                            </li>
+                            <li>
+                                <a href="#panelGoogleDrive" data-toggle="tab">GoogleDrive</a>
+                            </li>
+                        </ul>
+                        <div class="tab-content modal-body">
+                            <div class="tab-pane active" id="panelLocal">
+                                <input type="file" class="hide"  id="btnInputFile" onchange="btnInputFileChange(event)" accept=".pms">
+                                <button type="button" class="btn btn-primary" style="width:30%" onclick="btnFileOpen()">Open  <span class="glyphicon glyphicon-open"></span></button>
+                                <p></p>
+                                <button type="button" class="btn btn-primary" style="width:30%" onclick="btnFileSave()">Save  <span class="glyphicon glyphicon-save"></span></button>
+                            </div>
+                            <div class="tab-pane" id="panelGoogleDrive">
+                                <p>
+                                    Aperire hoc lineamentum, placere reddere annui subscriptione et statio Chung Chang.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-default" data-dismiss="modal">Close</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div id="entryModelDialog" tabindex="0" class="modal fade" onkeyup="modelEntryKeyUp(event)">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <form onsubmit="btnEntrySave(); return false;">
+                    <div class="modal-header">
+                        <input type="text" class="form-control" placeholder="Name" id="nameEntry" required/>
+                    </div>
+                    <div class="modal-body">
+                        <div class="col-md-12 input-group form-group">
+                            <input type="text" class="form-control" placeholder="Login" id="loginEntry" required/>
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-primary" onclick="btnCopyToClipboard('#loginEntry')"><span class="glyphicon glyphicon-duplicate"></span></button>
+                            </span>
+                        </div>
+                        <div class="col-md-12 input-group form-group">
+                            <span class="input-group-btn">
+                                <label type="button" class="btn btn-primary" id="btnCopyPassEntry" onclick="btnShowHidePassword('Entry')"><span class="glyphicon glyphicon-eye-open"></span></label>
+                            </span>
+                            <input type="password" class="form-control" placeholder="Password" id="passwordEntry" required />
+                            <span class="input-group-btn">
+                                <button type="button" class="btn btn-primary" onclick="btnCopyToClipboard('#passwordEntry')"><span class="glyphicon glyphicon-duplicate"></span></button>
+                            </span>
+                        </div>
+
+                        <p>
+                            You can automatically
+                            <a href="#" onclick='$("#passwordEntry").val(generatePassword(1, 1, 1, 0, 12))'> generate a random password</a>
+                            , or
+                            <a data-toggle="collapse" href="#genPassword" aria-expanded="false" aria-controls="genPassword"> generate custom password </a>
+                            by configuring the symbols and length used.
+                        </p>
+                        <div class="collapse" id="genPassword">
+                            <div class="row">
+                                <div class="btn-group col-md-5" data-toggle="buttons" onchange="btnGeneratePass()" style="padding-bottom: 12px;">
+                                    <label class="btn btn-primary active" id="opaz" >
+                                        <input type="checkbox" autocomplete="off" checked> a-z
+                                    </label>
+                                    <label class="btn btn-primary" id="opAZ">
+                                        <input type="checkbox" autocomplete="off"> A-Z
+                                    </label>
+                                    <label class="btn btn-primary" id="opNN">
+                                        <input type="checkbox" autocomplete="off"> 0-9
+                                    </label>
+                                    <label class="btn btn-primary" id="opSS">
+                                        <input type="checkbox" autocomplete="off"> %&*
+                                    </label>
+                                </div>  
+                                <div class="btn-group col-md-4" data-toggle="buttons" style="padding-bottom: 12px;">
+                                    <label type="button" class="btn btn-primary" onclick="btnPassLength('-')"><span class="glyphicon glyphicon-minus"></span></label>
+                                    <label class="btn btn-primary" id="passLength" style="width:50px">12</label>
+                                    <label type="button" class="btn btn-primary" onclick="btnPassLength('+')"><span class="glyphicon glyphicon-plus"></span></label>
+                                </div>                                
+                            </div>
+                        </div>
+                        <div class="col-md-12 form-group no-padding">
+                            <textarea class="form-control" placeholder="Comment or remark" id="commentEntry"></textarea>
+                        </div>
+                    </div>
+
+
+                    <div class="modal-footer">
+                        <button type="button" class="btn btn-default pull-left hide" id="btnDelEntry" onclick="btnEntryDel()"><span class="glyphicon glyphicon-trash"></span></button>
+                        <button type="button" class="btn btn-default" data-dismiss="modal" onclick="btnEntryClose()">Close</button>
+                        <button type="submit" id="btnSaveEntry" class="btn btn-primary">Save</button>
+                    </div>
+                </form>
+            </div>            
+        </div>
+    </div>
+
+</body>
+</html>
