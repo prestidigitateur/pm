@@ -11,9 +11,10 @@ function btnShowHidePassword (id) {
 function btnCopyToClipboard(element) {
     var $temp = $("<input>");
     $("body").append($temp);
-    $temp.val($(element).val()).select();
+    $temp.val($(element).val()).select().focus();
     document.execCommand("copy");
     $temp.remove();
+    $(element).focus();
 }
 
 function btnSearchEntry() {
@@ -54,7 +55,6 @@ function btnEntrySave() {
         updateEntry(editableEntry, $("#nameEntry").val(), $("#loginEntry").val(), $("#passwordEntry").val(), $("#commentEntry").val());
     }    
     btnEntryClose();
-
 }
 function btnEntryClose() {
     editableEntry = -1;
