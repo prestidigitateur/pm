@@ -1,0 +1,15 @@
+{
+  "name": "Password Manager",
+  "short_name": "pm",
+  "lang": "ru",
+  "start_url": "prestidigitateur.github.io/pm/src/index.html",
+  "display": "standalone",
+  "theme_color": "#F8F8F8",
+  "icons": [
+    {
+      "src": "pm/icons/icon.PNG",
+      "sizes": "240x240",
+      "type": "image/png"
+    }
+  ]
+}
