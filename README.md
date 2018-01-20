@@ -2,6 +2,7 @@
 
 ## about
 > Safely store your passwords and have access to them everywhere.
+
 [online](https://prestidigitateur.github.io/pm/src/index.html#)
 The application allows you to store your passwords and access them offline from any device where there is a browser. Safety is ensured by AES encryption with _CryptoJS_. Adaptability of the interface is provided by _Bootstrap3_.
 ## for what
