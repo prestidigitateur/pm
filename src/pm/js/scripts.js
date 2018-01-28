@@ -1,12 +1,12 @@
-﻿var loginList = [];
+﻿var header = { createDate:"no", updateDate:"", crypted:false };
+var loginList = [];
 var editableEntry = -1;
 var masterPassword = "";
 
-
+// entry buttons
 function btnShowHidePassword (id) {
     $("#password" + id).attr('type', $("#password" + id).attr('type') == 'password' ? 'text' : 'password');
-    $("#btnCopyPass" + id).html($("#password" + id).attr('type') == 'password' ? '<span class="glyphicon glyphicon-eye-open"></span>' : '<span class="glyphicon glyphicon-eye-close"></span>')
-    
+    $("#btnCopyPass" + id).html($("#password" + id).attr('type') == 'password' ? '<span class="glyphicon glyphicon-eye-open"></span>' : '<span class="glyphicon glyphicon-eye-close"></span>')  
 }
 function btnCopyToClipboard(element) {
     var $temp = $("<input>");
@@ -16,37 +16,6 @@ function btnCopyToClipboard(element) {
     $temp.remove();
     $(element).focus();
 }
-
-function btnSearchEntry() {
-    var sn = $("#searchName").val();
-    $('legend').each(function (i, e) {
-        var dfdf = $(e).text();
-        if ($(e).text().toLowerCase().indexOf(sn.toLowerCase()) >= 0) {
-            $("#entryDiv" + i).removeClass('hide');
-        }
-        else if ($(e).attr('id') != "name" + i) {
-            console.log('WTFK!!! legend#: ' + i + '; id = ' + $(e).attr('id'));
-        }
-        else {
-            $("#entryDiv" + i).addClass('hide');
-        }
-        
-    });
-    $("#searchName").val(null);
-    $("#searchName").attr('placeholder', 'Search for empty to return');
-    $('.navbar-collapse').collapse('hide');
-}
-
-function modelEntryKeyUp(e){
-    if (e.keyCode === 13) {
-        if (!$("#commentEntry").is(":focus"))
-            $("#btnSaveEntry").click();             
-    }
-    else if(e.keyCode === 27){
-        btnEntryClose();
-    }
-}
-
 function btnEntrySave() {
     if (editableEntry == -1) {
         addEntry($("#nameEntry").val(), $("#loginEntry").val(), $("#passwordEntry").val(), $("#commentEntry").val());
@@ -55,6 +24,7 @@ function btnEntrySave() {
         updateEntry(editableEntry, $("#nameEntry").val(), $("#loginEntry").val(), $("#passwordEntry").val(), $("#commentEntry").val());
     }    
     btnEntryClose();
+    updateFileHeader();
 }
 function btnEntryClose() {
     editableEntry = -1;
@@ -82,221 +52,17 @@ function btnEntryDel() {
         });        
     }
     btnEntryClose();
+    updateFileHeader();
 }
-
-function btnFileOpen() {
-    clearInputs("#fileModelDialog");
-    clearInputs("#protectModelDialog");
-    $("#mainDiv").html(null);  
-    loginList = [];
-    editableEntry = -1;
-    masterPassword = "";
-
-    if ('FileReader' in window) {
-        $("#btnInputFile").click(); 
-    } else {
-        ezBSAlert({
-            messageText: "Your browser does not support the HTML5 FileReader.",
-            alertType: "danger"
-        });
+function modelEntryKeyUp(e){
+    if (e.keyCode === 13) {
+        if (!$("#commentEntry").is(":focus"))
+            $("#btnSaveEntry").click();             
     }
-
-    $('.navbar-collapse').collapse('hide');
-    $("#fileModelDialog").modal('hide');
-}
-function btnInputFileChange(event) {
-    var fileToLoad = event.target.files[0];    
-    
-    if (fileToLoad) {
-        var reader = new FileReader();
-        reader.onload = async function (fileLoadedEvent) {
-            var textFromFileLoaded = fileLoadedEvent.target.result;
-            var decrypted = "";
-            try {
-                if (textFromFileLoaded.startsWith("nsybxtujnenytyfqltim")) {
-                    //Ask for password
-                    await ezBSAlert({
-                        type: "prompt",
-                        headerText: "This file is password protected",
-                        messageText: "Enter master password",
-                        alertType: "primary",
-                        inputFieldType: "password",
-                    }).done(function (e) { masterPassword = e; });
-
-                    decrypted = CryptoJS.AES.decrypt(textFromFileLoaded.replace('nsybxtujnenytyfqltim', ''), masterPassword).toString(CryptoJS.enc.Utf8);                    
-                }
-                else {
-                    decrypted = textFromFileLoaded;
-                }
-                loginList = JSON.parse(decrypted);
-
-                $.each(loginList, function (i, e) { drawEntry(i, e.n, e.l, e.p, e.c); });
-            }
-            catch (e) {
-                ezBSAlert({
-                    messageText: "Incorrect password!",
-                    alertType: "danger"
-                });
-                console.log(e.toString());
-            }
-        };
-        reader.readAsText(fileToLoad, 'UTF-8'); 
-     
-    }   
-}
-function btnFileSave() {
-    if ('Blob' in window) {
-        var fileName = "pass.pms";
-        var textToWrite = JSON.stringify(loginList);
-        var encrypted = "";
-        if (masterPassword != "") {
-            encrypted = CryptoJS.AES.encrypt(textToWrite, masterPassword);
-            encrypted = "nsybxtujnenytyfqltim" + encrypted;
-        }
-        else {
-            encrypted = textToWrite;
-        }
-
-        var textFileAsBlob = new Blob([encrypted], { type: 'text/plain' });
-
-        if ('msSaveOrOpenBlob' in navigator) {
-            navigator.msSaveOrOpenBlob(textFileAsBlob, fileName);
-        } else {
-            var downloadLink = document.createElement('a');
-            downloadLink.download = fileName;
-            downloadLink.innerHTML = 'Download File';
-            downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
-            downloadLink.style.display = 'none';
-            document.body.appendChild(downloadLink);            
-
-            downloadLink.click();
-            delete this.downloadLink;
-        }
-        
-    } else {
-        ezBSAlert({
-            messageText: "Your browser does not support the HTML5 Blob.",
-            alertType: "danger"
-        });
+    else if(e.keyCode === 27){
+        btnEntryClose();
     }
-    $('.navbar-collapse').collapse('hide');
-    $("#fileModelDialog").modal('hide');
 }
-
-function btnGetPassword() {
-    var pas1 = "";
-    var pas2 = "";
-    $('.navbar-collapse').collapse('hide');
-    ezBSAlert({
-        type: "prompt2",
-        headerText: masterPassword == "" ? "This file isn't password protected" : "This file is password protected",
-        messageText: masterPassword == "" ? "Input master password" : "Input new master password",
-        alertType: "primary",
-        inputFieldType: "password",
-    }).done(function (e) { 
-        if(!(e === false)) {
-            pas1 = e;
-            if(pas1 != ""){
-                ezBSAlert({
-                    type: "prompt2",
-                    headerText: masterPassword == "" ? "This file isn't password protected" : "This file is password protected",
-                    messageText: masterPassword == "" ? "Repeat master password" : "Repeat new master password",
-                    alertType: "primary",
-                    inputFieldType: "password",
-                }).done(function (e) { 
-                    if(!(e === false)){ 
-                        pas2 = e; 
-                        if(pas1==pas2){
-                            masterPassword = pas1;
-                            ezBSAlert({
-                            type: "alert",
-                            headerText: "Password protection",
-                            messageText: "Password has been successfully changed",
-                            alertType: "success"
-                            });
-                        }
-                        else{
-                            ezBSAlert({
-                                type: "alert",
-                                headerText: "Password protection",
-                                messageText: "Entered passwords do not match",
-                                alertType: "warning"
-                            });
-                        }
-                    }
-                });        
-            }
-            else{
-                ezBSAlert({
-                    type: "alert",
-                    headerText: "Password protection",
-                    messageText: "Password was successfully reset",
-                    alertType: "success"
-                });
-            }
-        }  
-    });  
-}
-
-function clearInputs(target) {
-    $(target).find(':input').each(function () {
-        switch (this.type) {
-            case 'password':
-            case 'select-multiple':
-            case 'select-one':
-            case 'text':
-            case 'textarea':
-                $(this).val('');
-                break;
-            case 'checkbox':
-            case 'radio':
-                this.checked = false;
-                break;
-            case 'file':
-                $(this).val(null);
-
-        }
-    });
-}
-function returnEntryDiv(i, n, l, p) {
-    return '<div class="col-md-12" id="entryDiv'+i+'" style="padding-top: 4px; padding-bottom: 4px;">'+                  
-        ' <fieldset id= "fieldset" class="col-md-10 col-md-offset-1" >' +
-        '     <legend id="name' + i + '">' + n + '</legend>' +
-        '     <div class="form-inline">' +
-        '         <div class="form-group pull-right" style="padding-left: 4px; padding-right: 2px;">' +
-        '             <button type="button" class="btn btn-primary" onclick="expandEntry(' + i + ')"><span class="glyphicon glyphicon-cog"></span></button>' +
-        '         </div>' +
-        '         <div class="col-sm-5 col-md-5 input-group form-group">' +
-        '             <input type="text" class="form-control" placeholder="Login" id="login' + i + '" value="' + l +'" readonly/>' +
-        '             <span class="input-group-btn">' +
-        '                 <button type="button" class="btn btn-primary" onclick = "btnCopyToClipboard(\'#login' + i +'\')"><span class="glyphicon glyphicon-duplicate"></span></button>' +
-        '             </span>' +
-        '         </div>' +
-        '         <div class="col-sm-6 col-md-6 input-group form-group">' +
-        '             <input type="password" class="form-control" placeholder="Password" id="password' + i + '" value="' + p + '" readonly/>' +
-        '             <span class="input-group-btn">' +
-        '                 <button type="button" class="btn btn-primary" onclick = "btnCopyToClipboard(\'#password' + i +'\')"><span class="glyphicon glyphicon-duplicate"></span></button>' +
-        '                 <button type="button" class="btn btn-primary" style="width: 48px;" id="btnCopyPass' + i + '" onclick = "btnShowHidePassword(\'' + i +'\')"><span class="glyphicon glyphicon-eye-open"></span></button>' +
-        '             </span>' +
-        '         </div>' +
-        '     </div>  ' +
-        ' </fieldset >' +
-        '</div>';    
-}
-function generatePassword(useLower, useUpper, useNumbers, useSymbols, length) {
-    var possible = '';
-    if (useLower) { possible += 'abcdefghijklmnopqrstuvwxyz'; }
-    if (useUpper) { possible += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; }
-    if (useNumbers) { possible += '0123456789'; }
-    if (useSymbols) { possible += '![]{}()%&*$#^<>~@|'; }
-
-    var pass = '';
-    for (var i = 0; i < length; i++) {
-        pass += possible.charAt(Math.floor(Math.random() * possible.length));
-    }
-    return pass;
-}
-
 function btnPassLength(s) {
     switch (s) {
         case '-':
@@ -323,7 +89,7 @@ function btnGeneratePass() {
     $("#passwordEntry").val(generatePassword(az, AZ, NN, SS, ln));
 }
 
-
+//entry function
 function addEntry(n, l, p, c) {
     var entryTemp = {
         n: n,
@@ -358,7 +124,275 @@ function expandEntry(i) {
     editableEntry = i;
     setTimeout(function() { $("#nameEntry").focus()}, 2);
 }
+function returnEntryDiv(i, n, l, p) {
+    return '<div class="col-md-12" id="entryDiv'+i+'" style="padding-top: 4px; padding-bottom: 4px;">'+                  
+        ' <fieldset id= "fieldset" class="col-md-10 col-md-offset-1" >' +
+        '     <legend id="name' + i + '">' + n + '</legend>' +
+        '     <div class="form-inline">' +
+        '         <div class="form-group pull-right" style="padding-left: 4px; padding-right: 2px;">' +
+        '             <button type="button" class="btn btn-primary" onclick="expandEntry(' + i + ')"><span class="glyphicon glyphicon-cog"></span></button>' +
+        '         </div>' +
+        '         <div class="col-sm-5 col-md-5 input-group form-group">' +
+        '             <input type="text" class="form-control" placeholder="Login" id="login' + i + '" value="' + l +'" readonly/>' +
+        '             <span class="input-group-btn">' +
+        '                 <button type="button" class="btn btn-primary" onclick = "btnCopyToClipboard(\'#login' + i +'\')"><span class="glyphicon glyphicon-duplicate"></span></button>' +
+        '             </span>' +
+        '         </div>' +
+        '         <div class="col-sm-6 col-md-6 input-group form-group">' +
+        '             <input type="password" class="form-control" placeholder="Password" id="password' + i + '" value="' + p + '" readonly/>' +
+        '             <span class="input-group-btn">' +
+        '                 <button type="button" class="btn btn-primary" onclick = "btnCopyToClipboard(\'#password' + i +'\')"><span class="glyphicon glyphicon-duplicate"></span></button>' +
+        '                 <button type="button" class="btn btn-primary" style="width: 48px;" id="btnCopyPass' + i + '" onclick = "btnShowHidePassword(\'' + i +'\')"><span class="glyphicon glyphicon-eye-open"></span></button>' +
+        '             </span>' +
+        '         </div>' +
+        '     </div>  ' +
+        ' </fieldset >' +
+        '</div>';    
+}
+function clearInputs(target) {
+    $(target).find(':input').each(function () {
+        switch (this.type) {
+            case 'password':
+            case 'select-multiple':
+            case 'select-one':
+            case 'text':
+            case 'textarea':
+                $(this).val('');
+                break;
+            case 'checkbox':
+            case 'radio':
+                this.checked = false;
+                break;
+            case 'file':
+                $(this).val(null);
 
+        }
+    });
+}
+function generatePassword(useLower, useUpper, useNumbers, useSymbols, length) {
+    var possible = '';
+    if (useLower) { possible += 'abcdefghijklmnopqrstuvwxyz'; }
+    if (useUpper) { possible += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ'; }
+    if (useNumbers) { possible += '0123456789'; }
+    if (useSymbols) { possible += '![]{}()%&*$#^<>~@|'; }
+
+    var pass = '';
+    for (var i = 0; i < length; i++) {
+        pass += possible.charAt(Math.floor(Math.random() * possible.length));
+    }
+    return pass;
+}
+
+
+//navbar buttons
+function btnSearchEntry() {
+    var sn = $("#searchName").val();
+    $('legend').each(function (i, e) {
+        var dfdf = $(e).text();
+        if ($(e).text().toLowerCase().indexOf(sn.toLowerCase()) >= 0) {
+            $("#entryDiv" + i).removeClass('hide');
+        }
+        else if ($(e).attr('id') != "name" + i) {
+            console.log('WTFK!!! legend#: ' + i + '; id = ' + $(e).attr('id'));
+        }
+        else {
+            $("#entryDiv" + i).addClass('hide');
+        }
+        
+    });
+    $("#searchName").val(null);
+    $("#searchName").attr('placeholder', 'Search for empty to return');
+    $('.navbar-collapse').collapse('hide');
+}
+
+////file dialog
+function btnFileOpen() {
+    clearInputs("#fileModelDialog");
+    clearInputs("#protectModelDialog");
+    $("#mainDiv").html(null);  
+    loginList = [];
+    editableEntry = -1;
+    masterPassword = "";
+
+    if ('FileReader' in window) {
+        $("#btnInputFile").click(); 
+    } else {
+        ezBSAlert({
+            messageText: "Your browser does not support the HTML5 FileReader.",
+            alertType: "danger"
+        });
+    }
+
+    $('.navbar-collapse').collapse('hide');
+    $("#fileModelDialog").modal('hide');
+}
+function btnInputFileChange(event) {
+    var fileToLoad = event.target.files[0];    
+    
+    if (fileToLoad) {
+        var reader = new FileReader();
+        reader.onload = async function (fileLoadedEvent) {
+            var textFromFileLoaded = fileLoadedEvent.target.result;
+            var decryptedHead = "";
+            var decryptedBody = "";            
+            try {
+                decryptedHead = textFromFileLoaded.split(" |ysnp| ", 2)[1];
+                decryptedBody = textFromFileLoaded.split(" |ysnp| ", 2)[0];
+
+                header = JSON.parse(decryptedHead);
+                
+                if (header.crypted) {
+                    //Ask for password
+                    await ezBSAlert({
+                        type: "prompt",
+                        headerText: "This file is password protected",
+                        messageText: "Enter master password",
+                        alertType: "primary",
+                        inputFieldType: "password",
+                    }).done(function (e) { masterPassword = e; });
+
+                    decryptedBody = CryptoJS.AES.decrypt(decryptedBody, masterPassword).toString(CryptoJS.enc.Utf8);                    
+                }
+                
+                loginList = JSON.parse(decryptedBody);
+
+                $.each(loginList, function (i, e) { drawEntry(i, e.n, e.l, e.p, e.c); });             
+            }
+            catch (e) {
+                ezBSAlert({
+                    messageText: "Incorrect password!",
+                    alertType: "danger"
+                });
+                console.log(e.toString());
+            }
+        };
+        reader.readAsText(fileToLoad, 'UTF-8'); 
+     
+    }   
+}
+function btnFileSave() {
+    if ('Blob' in window) {
+        var fileName = "pass.pms";
+        var headToWrite = JSON.stringify(header);
+        var bodyToWrite = JSON.stringify(loginList);
+
+
+        if (header.crypted) { bodyToWrite = CryptoJS.AES.encrypt(bodyToWrite, masterPassword); }
+        bodyToWrite += " |ysnp| ";
+        bodyToWrite += headToWrite;
+
+        var textFileAsBlob = new Blob([bodyToWrite], { type: 'text/plain' });
+
+        if ('msSaveOrOpenBlob' in navigator) {
+            navigator.msSaveOrOpenBlob(textFileAsBlob, fileName);
+        } else {
+            var downloadLink = document.createElement('a');
+            downloadLink.download = fileName;
+            downloadLink.innerHTML = 'Download File';
+            downloadLink.href = window.URL.createObjectURL(textFileAsBlob);
+            downloadLink.style.display = 'none';
+            document.body.appendChild(downloadLink);            
+
+            downloadLink.click();
+            delete this.downloadLink;
+        }
+        
+    } else {
+        ezBSAlert({
+            messageText: "Your browser does not support the HTML5 Blob.",
+            alertType: "danger"
+        });
+    }
+    $('.navbar-collapse').collapse('hide');
+    $("#fileModelDialog").modal('hide');
+}
+function btnSighInOut(){
+
+}
+
+////protect dialog
+function btnGetPassword() {
+    var pas1 = "";
+    var pas2 = "";
+    $('.navbar-collapse').collapse('hide');
+    ezBSAlert({
+        type: "prompt2",
+        headerText: masterPassword == "" ? "This file isn't password protected" : "This file is password protected",
+        messageText: masterPassword == "" ? "Input master password" : "Input new master password",
+        alertType: "primary",
+        inputFieldType: "password",
+    }).done(function (e) { 
+        if(!(e === false)) {
+            pas1 = e;
+            if(pas1 != ""){
+                ezBSAlert({
+                    type: "prompt2",
+                    headerText: masterPassword == "" ? "This file isn't password protected" : "This file is password protected",
+                    messageText: masterPassword == "" ? "Repeat master password" : "Repeat new master password",
+                    alertType: "primary",
+                    inputFieldType: "password",
+                }).done(function (e) { 
+                    if(!(e === false)){ 
+                        pas2 = e; 
+                        if(pas1==pas2){
+                            masterPassword = pas1;
+                            updateFileHeader();  
+                            ezBSAlert({
+                            type: "alert",
+                            headerText: "Password protection",
+                            messageText: "Password has been successfully changed",
+                            alertType: "success"
+                            });
+                        }
+                        else{
+                            ezBSAlert({
+                                type: "alert",
+                                headerText: "Password protection",
+                                messageText: "Entered passwords do not match",
+                                alertType: "warning"
+                            });
+                        }
+                    }
+                });        
+            }
+            else{
+                masterPassword = "";
+                updateFileHeader();  
+                ezBSAlert({
+                    type: "alert",
+                    headerText: "Password protection",
+                    messageText: "Password was successfully reset",
+                    alertType: "success"
+                });
+            }
+        }  
+    });    
+}
+
+
+//file header
+function updateFileHeader(){
+    var h = "Creation date: ";
+    if(header.createDate == "no"){ header.createDate = new Date(); }
+    header.updateDate = new Date();
+    header.crypted = masterPassword != "";
+    
+    //showFileHeader();
+}
+function showFileHeader(){
+    var h = "Creation date: ";
+    h += new Date(header.createDate).toLocaleString();
+    h += "<br> Updated date: ";
+    h += new Date(header.updateDate).toLocaleString();
+    h += "<br> Protection: ";
+    h += header.crypted;
+    h += "<p></p>";
+    
+    $(".file-info").html(h);
+}
+
+
+//promt/alert/confirm by ezanker (https://www.bootply.com/PoVEEtvPZt)
 function ezBSAlert(options) {
     var deferredObject = $.Deferred();
     var defaults = {

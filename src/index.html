@@ -42,7 +42,7 @@
 
                 <ul class="nav navbar-nav">
                     <li>
-                        <a href="#" data-toggle="modal" data-target="#fileModelDialog"><span class="glyphicon glyphicon-file"></span> File</a>
+                        <a href="#" data-toggle="modal" data-target="#fileModelDialog" onclick="showFileHeader()"><span class="glyphicon glyphicon-file"></span> File</a>
                     </li>
                 </ul>
 
@@ -98,6 +98,7 @@
                 </div>
             </div>
         </div>
+
     </main>
 
     <!-- jQuery v2.1.4 -->
@@ -123,15 +124,37 @@
                         </ul>
                         <div class="tab-content modal-body">
                             <div class="tab-pane active" id="panelLocal">
-                                <input type="file" class="hide"  id="btnInputFile" onchange="btnInputFileChange(event)" accept=".pms">
-                                <button type="button" class="btn btn-primary" style="width:30%" onclick="btnFileOpen()">Open  <span class="glyphicon glyphicon-open"></span></button>
-                                <p></p>
-                                <button type="button" class="btn btn-primary" style="width:30%" onclick="btnFileSave()">Save  <span class="glyphicon glyphicon-save"></span></button>
+                                <div class="row">
+                                    <div class="col-sm-offset-1 col-sm-6 file-info">
+                                        
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <input type="file" class="hide"  id="btnInputFile" onchange="btnInputFileChange(event)" accept=".pms">
+                                        <button type="button" class="btn btn-primary" style="width:100%" onclick="btnFileOpen()">Open  <span class="glyphicon glyphicon-open"></span></button>
+                                        <p></p>
+                                        <button type="button" class="btn btn-primary" style="width:100%" onclick="btnFileSave()">Save  <span class="glyphicon glyphicon-save"></span></button>
+                                    </div> 
+                                </div>                             
                             </div>
                             <div class="tab-pane" id="panelGoogleDrive">
-                                <p>
-                                    Aperire hoc lineamentum, placere reddere annui subscriptione et statio Chung Chang.
-                                </p>
+                                <div class="row">
+                                    <div class="col-sm-offset-1 col-sm-6">
+                                        <div>
+                                            <button type="button" class="btn btn-primary" style="width:100%" onclick="btnSighInOut()">Sign in  <span class="glyphicon glyphicon-log-in"></span></button> 
+                                        </div>
+                                        <p></p>
+                                        <div  class="file-info">
+                                            
+                                        </div>
+                                    </div>
+                                    <div class="col-sm-4">
+                                        <button type="button" class="btn btn-primary" style="width:100%" onclick="">Open  <span class="glyphicon glyphicon-cloud-download"></span></button>
+                                        <p></p>
+                                        <button type="button" class="btn btn-primary" style="width:100%" onclick="">Save  <span class="glyphicon glyphicon-cloud"></span></button>
+                                        <p></p>
+                                        <button type="button" class="btn btn-primary" style="width:100%" onclick="">Save as  <span class="glyphicon glyphicon-cloud-upload"></span></button>
+                                    </div> 
+                                </div>       
                             </div>
                         </div>
                     </div>
@@ -213,6 +236,6 @@
             </div>            
         </div>
     </div>
-
 </body>
+
 </html>
