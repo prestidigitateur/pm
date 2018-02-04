@@ -42,7 +42,7 @@
 
                 <ul class="nav navbar-nav">
                     <li>
-                        <a href="#" data-toggle="modal" data-target="#fileModelDialog" onclick="showFileHeader()"><span class="glyphicon glyphicon-file"></span> File</a>
+                        <a href="#" data-toggle="modal" data-target="#fileModelDialog" onclick="showFileHeader(); initGoogleAPI()"><span class="glyphicon glyphicon-file"></span> File</a>
                     </li>
                 </ul>
 
@@ -108,6 +108,8 @@
     <!-- CryptoJS v3.1.2 -->
     <script src="pm/js/aes.js"></script> 
     <script src="pm/js/scripts.js"></script>
+    <!-- google api -->
+    <script src="pm/js/googleDrive.js"></script>
 
     <div id="fileModelDialog" tabindex="0" class="modal fade">
         <div class="modal-dialog">
@@ -140,7 +142,7 @@
                                 <div class="row">
                                     <div class="col-sm-offset-1 col-sm-6">
                                         <div>
-                                            <button type="button" class="btn btn-primary" style="width:100%" onclick="btnSighInOut()">Sign in  <span class="glyphicon glyphicon-log-in"></span></button> 
+                                            <button disabled id="btnSighInOut" type="button" class="btn btn-primary" style="width:100%" onclick="btnSighInOut()">Sign in  <span class="glyphicon glyphicon-log-in"></span></button> 
                                         </div>
                                         <p></p>
                                         <div  class="file-info">
@@ -148,11 +150,11 @@
                                         </div>
                                     </div>
                                     <div class="col-sm-4">
-                                        <button type="button" class="btn btn-primary" style="width:100%" onclick="">Open  <span class="glyphicon glyphicon-cloud-download"></span></button>
+                                        <button disabled id="btnGoogleOpen" type="button" class="btn btn-primary" style="width:100%" onclick="btnGoogleOpen()">Open  <span class="glyphicon glyphicon-cloud-download"></span></button>
                                         <p></p>
-                                        <button type="button" class="btn btn-primary" style="width:100%" onclick="">Save  <span class="glyphicon glyphicon-cloud"></span></button>
+                                        <button disabled id="btnGoogleSave" type="button" class="btn btn-primary" style="width:100%" onclick="btnGoogleSave()">Save  <span class="glyphicon glyphicon-cloud"></span></button>
                                         <p></p>
-                                        <button type="button" class="btn btn-primary" style="width:100%" onclick="">Save as  <span class="glyphicon glyphicon-cloud-upload"></span></button>
+                                        <button disabled id="btnGoogleSaveAs" type="button" class="btn btn-primary" style="width:100%" onclick="btnGoogleSaveAs()">Save as  <span class="glyphicon glyphicon-cloud-upload"></span></button>
                                     </div> 
                                 </div>       
                             </div>

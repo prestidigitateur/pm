@@ -1,10 +1,3 @@
-/**
- * Google-interfacing part.
- *
- * This file uses Promises heavily. Google returned Theanbles and Promises are always wrapped into
- * browser-native promises, becasue they don't seem very compatible <https://developers.google.com/
- * api-client-library/javascript/features/promises>, i.e. Where is catch(..) method?
- */
 
 
 var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
@@ -13,10 +6,10 @@ var CLIENT_ID = '670947367916-e8ivlp27kk81m6p1eg7s962hd67vsr9b.apps.googleuserco
 var API_KEY = 'AIzaSyC3dmc6qvFHlTvoev_ZFPwaKSt2I4FUbzQ';
 
 var INSTALL_SCOPE = 'https://www.googleapis.com/auth/drive.install';
-// Picker doesn't relly work without readonly, hm
 var DEFAULT_SCOPE = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file';
-var MAX_FILE_SIZE = 2*1024*1024; // we will simply refuse to open files bigger than this
 
+var APP_ID = "670947367916";
+var DEVELOPER_KEY = 'AIzaSyAyDS0TdG30_Akv5OCfKAuxz1apBhMFjNs';
 
 var the_state = {
     auth_failed: false,
@@ -27,27 +20,29 @@ var the_state = {
 
 Object.seal(the_state);
 
-var the_state_listener = null;
-
-function fireAndForget(thenable) {
-    thenable.then(function() {log("ok")}, function(err) { log(err) });
-}
-
 function changeState(change) {
     var something_changed = false;
     $.each(change, function(key, value) {
         if(the_state[key] != value) {
-            log("google state: " + key + " changed: ", value);
+            console.log("google state: " + key + " changed: ", value);
             the_state[key] = value;
             something_changed = true;
         }
     });
-    if(the_state_listener && something_changed)
-        the_state_listener(the_state);
+    //if(the_state_listener && something_changed)
+    //    the_state_listener(the_state);
+
+    $("#btnSighInOut").prop('disabled', !the_state.auth_ready);
+    $("#btnGoogleOpen").prop('disabled', !the_state.signed_in);
+    $("#btnGoogleSave").prop('disabled', !the_state.signed_in);
+    $("#btnGoogleSaveAs").prop('disabled', !the_state.signed_in);
+
+
+    $("#btnSighInOut").html(the_state.signed_in ? 'Sign out  <span class="glyphicon glyphicon-log-out"></span>' : 'Sign in  <span class="glyphicon glyphicon-log-in"></span>');
 }
 
 var already_initialized = false;
-function doInitialization() {
+function initGoogleAPI() {
     if(already_initialized)
         return;
 
@@ -65,8 +60,8 @@ function doInitialization() {
         })
     }).then(function() {
         return new Promise(function(resolve, reject) {
-            // cannot see any way to handle errors here
-            gapi.load("client:auth2:picker", resolve);
+            //no way to catch?
+            gapi.load("client:auth2:picker", resolve);           
         })
     }).then(function() {
         return new Promise(function(resolve, reject) {
@@ -114,87 +109,22 @@ function doInitialization() {
     })
 }
 
-
-/**
- * Registers a listener for changes in Google Drive state (logged in...),
- * there can be only one listener, to make memory leaks impossible (?)
- */
-module.exports.setStateListener = function(listener) {
-    the_state_listener = listener
+function btnSighInOut(){
+    if(!the_state.signed_in)
+        gapi.auth2.getAuthInstance().signIn();
+    
+    else
+        gapi.auth2.getAuthInstance().signOut();//no work, why?    
 }
 
-/**
- * Returns Google Drive state
- */
-function getState() {
-    return the_state;
-}
+var fileName = "";
+var fileID = "";
 
-function signIn() {
-    fireAndForget(gapi.auth2.getAuthInstance().signIn());
-}
-
-function signOut() {
-    fireAndForget(gapi.auth2.getAuthInstance().signOut());
-}
-
-function getCurrentUser() {
-    if(!the_state.auth_ready)
-        return null;
-
-    return gapi.auth2.getAuthInstance().currentUser.get();
-}
-
-function integrateUi() {
-    var usr = getCurrentUser();
-    if(usr) {
-        var options = new gapi.auth2.SigninOptionsBuilder({'scope': INSTALL_SCOPE});
-        fireAndForget(usr.grant(options));
-    }
-}
-
-function getCurrentToken() {
-    var usr = getCurrentUser();
-    if(usr) {
-        var auth = usr.getAuthResponse();
-        if(auth) {
-            var result = auth.access_token;
-            return result;
-        }
-    }
-    return null;
-}
-
-// https://gist.github.com/getify/7325764
-function toArray(bStr) {
-    var i, len = bStr.length, u8_array = new Uint8Array(len);
-    for (var i = 0; i < len; i++) {
-        u8_array[i] = bStr.charCodeAt(i);
-    }
-    return u8_array;
-}
-
-function fromArray(u8Array) {
-    var i, len = u8Array.length, b_str = "";
-    for (i=0; i<len; i++) {
-        b_str += String.fromCharCode(u8Array[i]);
-    }
-    return b_str;
-}
-
-function parseBinary(str) {
-    return utf8.fromByteArray(toArray(str));
-}
-
-function createBinary(str) {
-    return fromArray(utf8.toByteArray(str));
-}
-
-
-function pick() {
+function loadFileFromGD() {
     return new Promise(function(resolve, reject) {
         var view = new google.picker.DocsView();
         view.setMode(google.picker.DocsViewMode.LIST);
+        view.setQuery("*.pms");
 
         var appid = CLIENT_ID.substr(0, CLIENT_ID.indexOf("-"));
 
@@ -210,7 +140,7 @@ function pick() {
                 // is it ok? <http://stackoverflow.com/questions/20068467/do-never-resolved-promises-cause-memory-leak>
             }
         }
-
+        //how to delete picker after all?
         var picker = new google.picker.PickerBuilder().
             addView(view).
             setAppId(appid).
@@ -219,9 +149,13 @@ function pick() {
             enableFeature(google.picker.Feature.NAV_HIDDEN).
             setCallback(callback).
             setTitle("Open a password file").
+            setSize(566,350).
             build();
 
-        picker.setVisible(true);
+        picker.setVisible(true);  
+        $(".picker-dialog-content").css({'height': '100%','width': '100%', 'max-width': '566px'});
+        $(".picker-dialog").css({'height': '80%', 'width': '96%','max-width': '566px', 'top': '0', 'right': '0', 'bottom': '0', 'left': '0', 'margin': 'auto'});
+
     }).then(function(id) {
         // size problably not returning by picker, so we will perform call to determine it
         return new Promise(function(resolve, reject) {
@@ -244,7 +178,6 @@ function pick() {
             })
         })
     }).then(function(x) {
-
         return new Promise(function(resolve, reject) {
             gapi.client.drive.files.get({
                 "fileId": x.id,
@@ -253,7 +186,7 @@ function pick() {
                 resolve({
                     google_id: x.id,
                     name: x.name,
-                    data: parseBinary(y.body)
+                    data: y.body
                 })
             }, function(x) {
                 console.log(x);
@@ -262,53 +195,77 @@ function pick() {
         })
     })
 }
+async function btnGoogleOpen(){
+    clearInputs("#fileModelDialog");
+    clearInputs("#protectModelDialog");
+    $("#mainDiv").html(null);  
+    loginList = [];
+    editableEntry = -1;
+    masterPassword = "";
 
-function save = function(google_id, data) {
-    return new Promise(function(resolve, reject) {
-        gapi.client.request({
-            'path': 'https://www.googleapis.com/upload/drive/v3/files/' + google_id,
-            'method': 'PATCH',
-            'params': {'uploadType': 'media'},
-            'body': createBinary(data)
-        }).then(function(x) {
-            console.log(x.body);
-            resolve();
-        }, function(x) {
-            console.log('error updating: ', x);
-            reject("Error updating file: " + x.statusText);
-        })
-    })
+    $('.navbar-collapse').collapse('hide');
+    $("#fileModelDialog").modal('hide');
+
+    var file = await loadFileFromGD();
+    
+    fileName = file.name;
+    fileID = file.google_id;
+    var textFromFileLoaded = file.data;
+    var decryptedHead = "";
+    var decryptedBody = "";  
+
+    try {
+        decryptedHead = textFromFileLoaded.split(" |ysnp| ", 2)[1];
+        decryptedBody = textFromFileLoaded.split(" |ysnp| ", 2)[0];
+
+        header = JSON.parse(decryptedHead);
+                        
+        if (header.crypted) {
+            //Ask for password
+        await ezBSAlert({
+            type: "prompt",
+            headerText: "This file is password protected",
+            messageText: "Enter master password",
+            alertType: "primary",
+            inputFieldType: "password",
+        }).done(function (e) { masterPassword = e; });
+
+        decryptedBody = CryptoJS.AES.decrypt(decryptedBody, masterPassword).toString(CryptoJS.enc.Utf8);                    
+        }
+                        
+        loginList = JSON.parse(decryptedBody);
+
+        $.each(loginList, function (i, e) { drawEntry(i, e.n, e.l, e.p, e.c); });             
+    }
+    catch (e) {
+        ezBSAlert({
+            messageText: "Incorrect password!",
+            alertType: "danger"
+        });
+        console.log(e.toString());
+    }
+}
+function btnGoogleSave(){
+    
+}
+function btnGoogleSaveAs(){
+    
 }
 
-function saveAs = function(filename, data) {
-    console.log("save as: ", filename, ", data: ", data);
+function getCurrentToken() {
+    var usr = getCurrentUser();
+    if(usr) {
+        var auth = usr.getAuthResponse();
+        if(auth) {
+            var result = auth.access_token;
+            return result;
+        }
+    }
+    return null;
+}
+function getCurrentUser() {
+    if(!the_state.auth_ready)
+        return null;
 
-    return new Promise(function(resolve, reject) {
-        var body = new Multipartish();
-        body.header("Content-Type", "application/json; charset=UTF-8");
-        body.part(createBinary(JSON.stringify({name: filename})));
-
-        body.header("Content-Type", "application/octet-stream");
-        body.part(createBinary(data));
-
-        var request = body.get();
-        console.log("request: ", request);
-
-        gapi.client.request({
-            'path': 'https://www.googleapis.com/upload/drive/v3/files',
-            'method': 'POST',
-            'params': {'uploadType': 'multipart'},
-            'headers': {
-                'Content-Type': body.contentType()
-            },
-            'body': request
-        }).then(function(x) {
-            var id = x.result.id;
-            console.log("successfuly saved file, id = ", id);
-            resolve(id);
-        }, function(x) {
-            console.log(x);
-            resolve("b");
-        })
-    })
+    return gapi.auth2.getAuthInstance().currentUser.get();
 }

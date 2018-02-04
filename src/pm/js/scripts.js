@@ -306,9 +306,7 @@ function btnFileSave() {
     $('.navbar-collapse').collapse('hide');
     $("#fileModelDialog").modal('hide');
 }
-function btnSighInOut(){
 
-}
 
 ////protect dialog
 function btnGetPassword() {
