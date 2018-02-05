@@ -1,7 +1,8 @@
-﻿var header = { createDate:"no", updateDate:"", crypted:false };
+﻿var header = { createDate: new Date(), updateDate: new Date(), crypted:false };
 var loginList = [];
 var editableEntry = -1;
 var masterPassword = "";
+var fileName = "No name.pms";
 
 // entry buttons
 function btnShowHidePassword (id) {
@@ -213,6 +214,8 @@ function btnFileOpen() {
     loginList = [];
     editableEntry = -1;
     masterPassword = "";
+    fileName = "No name.pms";
+    header = { createDate:new Date(), updateDate:new Date(), crypted:false };
 
     if ('FileReader' in window) {
         $("#btnInputFile").click(); 
@@ -227,7 +230,7 @@ function btnFileOpen() {
     $("#fileModelDialog").modal('hide');
 }
 function btnInputFileChange(event) {
-    var fileToLoad = event.target.files[0];    
+    var fileToLoad = event.target.files[0];   
     
     if (fileToLoad) {
         var reader = new FileReader();
@@ -256,7 +259,9 @@ function btnInputFileChange(event) {
                 
                 loginList = JSON.parse(decryptedBody);
 
-                $.each(loginList, function (i, e) { drawEntry(i, e.n, e.l, e.p, e.c); });             
+                $.each(loginList, function (i, e) { drawEntry(i, e.n, e.l, e.p, e.c); });  
+
+                fileName = fileToLoad.name;//.slice(0,-4);            
             }
             catch (e) {
                 ezBSAlert({
@@ -264,6 +269,9 @@ function btnInputFileChange(event) {
                     alertType: "danger"
                 });
                 console.log(e.toString());
+
+                fileName = "No name.pms";
+                header = { createDate:new Date(), updateDate:new Date(), crypted:false };
             }
         };
         reader.readAsText(fileToLoad, 'UTF-8'); 
@@ -272,10 +280,10 @@ function btnInputFileChange(event) {
 }
 function btnFileSave() {
     if ('Blob' in window) {
-        var fileName = "pass.pms";
+        //if (fileName.indexOf(".pms") == -1){fileName = "pass.pms";}
+
         var headToWrite = JSON.stringify(header);
         var bodyToWrite = JSON.stringify(loginList);
-
 
         if (header.crypted) { bodyToWrite = CryptoJS.AES.encrypt(bodyToWrite, masterPassword); }
         bodyToWrite += " |ysnp| ";
@@ -378,7 +386,9 @@ function updateFileHeader(){
     //showFileHeader();
 }
 function showFileHeader(){
-    var h = "Creation date: ";
+    var h = "File name: ";
+    h += fileName;
+    h += "<br> Creation date: ";
     h += new Date(header.createDate).toLocaleString();
     h += "<br> Updated date: ";
     h += new Date(header.updateDate).toLocaleString();

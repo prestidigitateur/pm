@@ -7,18 +7,16 @@
   <body>
     <p>Drive API Quickstart</p>
 
-	<button id="init-button" onclick="doInitialization()">INIT</button>
     <!--Add buttons to initiate auth sequence and sign out-->
     <button id="authorize-button" style="display: none;">Authorize</button>
     <button id="signout-button" style="display: none;">Sign Out</button>
-
+  <button id="sbutton" onclick="initGoogleAPI()">Init picker</button>
     <pre id="content"></pre>
 
-    <script src="pm/js/jquery.min.js"></script>
     <script type="text/javascript">
       // Client ID and API key from the Developer Console
       var CLIENT_ID = '670947367916-e8ivlp27kk81m6p1eg7s962hd67vsr9b.apps.googleusercontent.com';
-      var API_KEY = 'AIzaSyC3dmc6qvFHlTvoev_ZFPwaKSt2I4FUbzQ';
+      var API_KEY = 'AIzaSyCFHmicKjyR1XiP5XP6zpyVhfNEFEWZmPc';
 
       // Array of API discovery doc URLs for APIs used by the quickstart
       var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
@@ -120,7 +118,10 @@
         });
       }
 
-var the_state = {
+    </script>
+
+<script type="text/javascript">
+  var the_state = {
     auth_failed: false,
     auth_ready: false,
     signed_in: false,
@@ -130,20 +131,19 @@ var the_state = {
 Object.seal(the_state);
 
 function changeState(change) {
-    var something_changed = false
+    var something_changed = false;
     $.each(change, function(key, value) {
         if(the_state[key] != value) {
             console.log("google state: " + key + " changed: ", value);
-            the_state[key] = value
-            something_changed = true
+            the_state[key] = value;
+            something_changed = true;
         }
     });
     //if(the_state_listener && something_changed)
-    //    the_state_listener(the_state)
+    //    the_state_listener(the_state);
 }
-
-var already_initialized = false;     
-function doInitialization() {
+var already_initialized = false;
+function initGoogleAPI() {
     if(already_initialized)
         return;
 
@@ -158,12 +158,12 @@ function doInitialization() {
             resolve();
         }).fail(function(jqXHR, textStatus) {
             reject("Unable to load Google API: " + textStatus);
-        });
+        })
     }).then(function() {
         return new Promise(function(resolve, reject) {
-            // cannot see any way to handle errors here
-            gapi.load("client:auth2:picker", resolve);
-        });
+            //no way to catch?
+            gapi.load("client:auth2:picker", resolve);           
+        })
     }).then(function() {
         return new Promise(function(resolve, reject) {
             return gapi.client.init({
@@ -175,19 +175,15 @@ function doInitialization() {
                 var msg = err.message;
                 reject(msg);
             });
-        });
+        })
     }).then(function() {
         return new Promise(function(resolve, reject) {
-
-			//del
-			resolve();
-
             gapi.auth2.init({
                 fetch_basic_profile: false,
                 client_id: CLIENT_ID,
                 scope: DEFAULT_SCOPE
             }).then(function(auth) {
-                var update_signed_in = function(is_signed_in) { changeState({signed_in: is_signed_in}); }
+                var update_signed_in = function(is_signed_in) { changeState({signed_in: is_signed_in}); };
                 var update_current_user = function(usr) {
                     changeState({ui_integrated: usr.hasGrantedScopes(INSTALL_SCOPE)});
                 }
@@ -201,7 +197,7 @@ function doInitialization() {
 
                 resolve();
             }, function(arg) {
-                log("rejected in gapi.auth2.init", arg);
+                console.log("rejected in gapi.auth2.init", arg);
                 reject(arg.message || arg.error);
             })
         })
@@ -211,9 +207,13 @@ function doInitialization() {
         console.log("google init failed:", err);
 
         changeState({auth_failed: true});
-    })}
+    })
+}
+</script>
 
+    <script async defer src="https://apis.google.com/js/api.js"
+      onload="this.onload=function(){};handleClientLoad()"
+      onreadystatechange="if (this.readyState === 'complete') this.onload()">
     </script>
-
   </body>
 </html>

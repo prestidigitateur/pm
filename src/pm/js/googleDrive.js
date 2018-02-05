@@ -3,13 +3,11 @@
 var DISCOVERY_DOCS = ["https://www.googleapis.com/discovery/v1/apis/drive/v3/rest"];
 
 var CLIENT_ID = '670947367916-e8ivlp27kk81m6p1eg7s962hd67vsr9b.apps.googleusercontent.com';
-var API_KEY = 'AIzaSyC3dmc6qvFHlTvoev_ZFPwaKSt2I4FUbzQ';
 
 var INSTALL_SCOPE = 'https://www.googleapis.com/auth/drive.install';
 var DEFAULT_SCOPE = 'https://www.googleapis.com/auth/drive.readonly https://www.googleapis.com/auth/drive.file';
 
-var APP_ID = "670947367916";
-var DEVELOPER_KEY = 'AIzaSyAyDS0TdG30_Akv5OCfKAuxz1apBhMFjNs';
+var DEVELOPER_KEY = 'AIzaSyCwyngJi5vUCkx__na91CVDNdnGetCGH6s';
 
 var the_state = {
     auth_failed: false,
@@ -34,7 +32,7 @@ function changeState(change) {
 
     $("#btnSighInOut").prop('disabled', !the_state.auth_ready);
     $("#btnGoogleOpen").prop('disabled', !the_state.signed_in);
-    $("#btnGoogleSave").prop('disabled', !the_state.signed_in);
+    //$("#btnGoogleSave").prop('disabled', !the_state.signed_in);
     $("#btnGoogleSaveAs").prop('disabled', !the_state.signed_in);
 
 
@@ -117,9 +115,8 @@ function btnSighInOut(){
         gapi.auth2.getAuthInstance().signOut();//no work, why?    
 }
 
-var fileName = "";
 var fileID = "";
-
+//https://github.com/softmonkeyjapan/angular-google-picker/issues/16
 function loadFileFromGD() {
     return new Promise(function(resolve, reject) {
         var view = new google.picker.DocsView();
@@ -149,7 +146,6 @@ function loadFileFromGD() {
             enableFeature(google.picker.Feature.NAV_HIDDEN).
             setCallback(callback).
             setTitle("Open a password file").
-            setSize(566,350).
             build();
 
         picker.setVisible(true);  
@@ -167,9 +163,6 @@ function loadFileFromGD() {
 
                 if(!sstr)
                     reject("Not a binary file, cannot open");
-
-                //if(Number(sstr) > MAX_FILE_SIZE)
-                //    reject(Str.FILE_TOO_BIG);
 
                 resolve({id:id, name:x.result.name});
             }, function(x) {
@@ -202,6 +195,9 @@ async function btnGoogleOpen(){
     loginList = [];
     editableEntry = -1;
     masterPassword = "";
+    fileName = "No name.pms";
+    header = { createDate:new Date(), updateDate:new Date(), crypted:false };
+
 
     $('.navbar-collapse').collapse('hide');
     $("#fileModelDialog").modal('hide');
@@ -235,7 +231,9 @@ async function btnGoogleOpen(){
                         
         loginList = JSON.parse(decryptedBody);
 
-        $.each(loginList, function (i, e) { drawEntry(i, e.n, e.l, e.p, e.c); });             
+        $.each(loginList, function (i, e) { drawEntry(i, e.n, e.l, e.p, e.c); });
+
+        $("#btnGoogleSave").prop('disabled', false);          
     }
     catch (e) {
         ezBSAlert({
@@ -243,13 +241,124 @@ async function btnGoogleOpen(){
             alertType: "danger"
         });
         console.log(e.toString());
+        $("#btnGoogleSave").prop('disabled', true);
+        fileName = "No name.pms";
+        header = { createDate:new Date(), updateDate:new Date(), crypted:false };   
     }
 }
-function btnGoogleSave(){
-    
+function saveFileToGD(data){
+    return new Promise(function(resolve, reject) {
+        gapi.client.request({
+            'path': 'https://www.googleapis.com/upload/drive/v3/files/' + fileID,
+            'method': 'PATCH',
+            'params': {'uploadType': 'media'},
+            'body': data
+        }).then(function(x) {
+            console.log(x.body)
+            resolve()
+        }, function(x) {
+            console.log('error updating: ', x)
+            reject("Error updating file: " + x.statusText)
+        })
+    });
 }
-function btnGoogleSaveAs(){
-    
+function btnGoogleSave(){
+
+    $('.navbar-collapse').collapse('hide');
+    $("#fileModelDialog").modal('hide');
+
+    var headToWrite = JSON.stringify(header);
+    var bodyToWrite = JSON.stringify(loginList);
+    if (header.crypted) { bodyToWrite = CryptoJS.AES.encrypt(bodyToWrite, masterPassword); }
+    bodyToWrite += " |ysnp| ";
+    bodyToWrite += headToWrite;
+
+    saveFileToGD(bodyToWrite).then(function() {
+        ezBSAlert({
+            type: "alert",
+            headerText: "Upload file",
+            messageText: "File successfuly saved on GoogleDrive",
+            alertType: "success"
+        });
+    }, function(err) {
+        ezBSAlert({
+            type: "alert",
+            headerText: "Upload file",
+            messageText: err,
+            alertType: "warning"
+        });
+    });
+}
+function saveAsFileToGD(name, data){
+    return new Promise(function(resolve, reject) {
+
+        const boundary = '-------314159265358979323846';
+        const delimiter = "\r\n--" + boundary + "\r\n";
+        const closeDelimiter = "\r\n--" + boundary + "--";
+        const contentType = 'application/json';
+
+        var metadata = {
+            'name': name,
+            'mimeType': contentType
+        };
+
+        var multipartRequestBody =
+            delimiter +
+            'Content-Type: application/json\r\n\r\n' +
+            JSON.stringify(metadata) +
+            delimiter +
+            'Content-Type: ' + contentType + '\r\n\r\n' +
+            data +
+            closeDelimiter;
+
+        gapi.client.request({
+            'path': '/upload/drive/v3/files',
+            'method': 'POST',
+            'params': { 'uploadType': 'multipart' },
+            'headers': { 'Content-Type': 'multipart/related; boundary="' + boundary + '"' },
+            'body': multipartRequestBody
+        }).then(function(x) {
+            console.log(x.body)
+            resolve()
+        }, function(x) {
+            console.log('error create: ', x)
+            reject("Error create file: " + x.statusText)
+        })
+    });
+}
+async function btnGoogleSaveAs(){
+    $('.navbar-collapse').collapse('hide');
+    $("#fileModelDialog").modal('hide');
+
+    await ezBSAlert({
+        type: "prompt",
+        headerText: "Upload file",
+        messageText: "Enter the name of the passwords file",
+        alertType: "primary",
+        inputFieldType: "text",
+    }).done(function (e) { fileName = e + ".pms"; });
+
+    var headToWrite = JSON.stringify(header);
+    var bodyToWrite = JSON.stringify(loginList);
+    if (header.crypted) { bodyToWrite = CryptoJS.AES.encrypt(bodyToWrite, masterPassword); }
+    bodyToWrite += " |ysnp| ";
+    bodyToWrite += headToWrite;
+
+    saveAsFileToGD(fileName, bodyToWrite).then(function() {
+        ezBSAlert({
+            type: "alert",
+            headerText: "Upload file",
+            messageText: "File successfuly saved on GoogleDrive",
+            alertType: "success"
+        });
+    }, function(err) {
+        ezBSAlert({
+            type: "alert",
+            headerText: "Upload file",
+            messageText: err,
+            alertType: "warning"
+        });
+    }); 
 }
 
 function getCurrentToken() {
