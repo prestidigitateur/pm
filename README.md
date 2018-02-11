@@ -13,9 +13,9 @@ The desire to store and access the passwords offline and be sure in their securi
 Just [use](https://prestidigitateur.github.io/pm/src/index.html#)
 ### use your own online version
 Publish this site in any convenient way. If you want to use GoogleDrive change _CLIENT_ID_, _DEVELOPER_KEY_, _APP_ID_ in _googleDrive.js_ according to this [instruction](https://developers.google.com/drive/v3/web/quickstart/js)
-!You should enable _Google Picker API_ and _Google Drive API_ in [developer console](https://console.developers.google.com).
+**!** You should enable _Google Picker API_ and _Google Drive API_ in [developer console](https://console.developers.google.com).
 ### use offline version
-Just download and drag the folder **scr** in a convenient place. To start, open **index.html** in the browser. You can create a shortcut for convenience.
+Just download and drag the folder **scr** in a convenient place. To start, open _index.html_ in the browser. You can create a shortcut for convenience.
 Delete _src/js/googleDrive.js_, because it will not work, other functions works as usual.
 ## !important
 The web application can be used on any device with a browser supporting the specification ES2017.
