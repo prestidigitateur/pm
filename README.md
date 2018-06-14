@@ -3,14 +3,14 @@
 ## about
 > Safely store your passwords and have access to them everywhere.
 
-[online](https://prestidigitateur.github.io/pm/src/index.html#)
+[online](https://qcp.github.io/pm/src/index.html)
 
 The application allows you to store your passwords and access them offline from any device where there is a browser. Safety is ensured by AES encryption with _CryptoJS_. Adaptability of the interface is provided by _Bootstrap3_.
 ## for what
 The desire to store and access the passwords offline and be sure in their security.
 ## how to use
 ### use online version
-Just [use](https://prestidigitateur.github.io/pm/src/index.html#)
+Just [use](https://qcp.github.io/pm/src/index.html)
 ### use your own online version
 Publish this site in any convenient way. If you want to use GoogleDrive change _CLIENT_ID_, _DEVELOPER_KEY_, _APP_ID_ in _googleDrive.js_ according to this [instruction](https://developers.google.com/drive/v3/web/quickstart/js)
 **!** You should enable _Google Picker API_ and _Google Drive API_ in [developer console](https://console.developers.google.com).
